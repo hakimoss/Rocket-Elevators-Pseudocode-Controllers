@@ -60,6 +60,7 @@ ENDDEFINE
 
 ////////////////////// Scénario 1 ///////////////////////////
 
+SET columnA TO NEW Column WITH 1, "idle", 10, 2
 SET elevatorA TO NEW Elevator WITH 1, "idle" , 10 AND 2
 SET elevatorB TO NEW Elevator WITH 2, "idle" , 10 AND 6
 SET doorA TO NEW Door WITH 1, "closed"
