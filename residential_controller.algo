@@ -1,0 +1,79 @@
+
+
+DEFINE Column USING _id, _status, _amountOfFloors AND _amountOfElevators
+    SET ID TO _id
+    SET status TO _status
+    SET elevatorsList TO EMPTY ARRAY
+    SET callButtonsList  TO EMPTY ARRAY
+
+    SEQUENCE requestElevator USING requestedFloor AND direction
+        IF Elevator.status EQUAL "idle" THEN
+            SEQUENCE
+                CallButton.status EQUAL "moving"    
+            ENDSEQUENCE            
+        ENDIF
+        -Trouver un ascenseur disponible (x)
+        -Faire bouger cet ascenseur jusqu’à l’utilisateur
+        -Gérer les portes
+        -Retourner l’ascenseur à la fin de la fonction, pour être utilisé par la méthode requestFloor de cet ascenseur.
+    ENDSEQUENCE
+ENDDEFINE
+
+DEFINE Elevator USING _id, _status, _amountOfFloor AND _currentFloor
+    SET ID TO _id
+    SET status TO _status
+    SET currentFloor TO _currentFloor
+    SET direction TO null 
+    SET door TO NEW Door WITH _id
+    SET FloorRequestButtonList TO EMPTY ARRAY
+    SET floorRequestList TO EMPTY ARRAY
+
+    SEQUENCE requestFloor USING _requestedFloor
+        -Déplacer l’ascenseur jusqu’à l’étage demandé par l’utilisateur
+        -Gérer les portes
+    ENDSEQUENCE
+ENDDEFINE    
+
+DEFINE Door USING _id AND _status
+    SET ID TO _id
+    SET status TO _status
+ENDDEFINE
+
+DEFINE CallButton USING _id, _status, _floor AND _direction
+    SET ID TO _id
+    SET status TO _status
+    SET floor TO _floor
+    SET direction TO _direction
+ENDDEFINE
+
+DEFINE FloorRequestButton USING _id, _status AND _floor
+    SET ID TO _id
+    SET status TO _status
+    SET floor TO _floor
+ENDDEFINE
+
+
+
+
+
+
+
+////////////////////// Scénario 1 ///////////////////////////
+
+SET elevatorA TO NEW Elevator WITH 1, "idle" , 10 AND 2
+SET elevatorB TO NEW Elevator WITH 2, "idle" , 10 AND 6
+SET doorA TO NEW Door WITH 1, "closed"
+SET doorB TO NEW Door WITH 2, "closed"
+
+
+
+
+
+
+
+
+
+
+////////////////////// Scénario 2 ///////////////////////////
+
+
