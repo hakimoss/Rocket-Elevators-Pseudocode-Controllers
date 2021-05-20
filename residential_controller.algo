@@ -1,60 +1,134 @@
 
 
-DEFINE Column USING _id, _status, _amountOfFloors AND _amountOfElevators
+DEFINE Column USING _id, _amountOfFloors AND _amountOfElevators
     SET ID TO _id
-    SET status TO _status
+    SET status TO idle
     SET elevatorsList TO EMPTY ARRAY
     SET callButtonsList  TO EMPTY ARRAY
+    SET elevatorInAction TO EMPTY ARRAY
+    SET amountOfElevator TO _amountOfElevator
 
     FOR EACH __amountOfElevators
-       PUSH NEW Elevator TO elevatorsList
+       PUSH NEW Elevator TO elevatorsList USING _id, idle, _amountOfFloors
     ENDFOR
     FOR EACH _amountOfFloors
-        PUSH NEW CallButton TO callButtonsList
+        PUSH NEW CallButton TO callButtonsList USING _id, idle, _id, up
+        PUSH NEW CallButton TO callButtonsList USING _id + 10, idle, _id, down
     ENDFOR
 
     SEQUENCE requestElevator USING requestedFloor AND direction
-      
-        IF 
+        SET score TO 0
 
+        FOR EACH elevator IN elevatorList
+            IF elevatorsList.currentFloor > requestedFloor THEN
+                score EQUAL elevatorList.currentFloor - requestedFloor
+            ELSE 
+                score EQUAL requestedFloor - elevatorList.currentFloor
+            ENDIF
+            IF direction EQUAL elevatorList.direction THEN
+                score EQUAL score + 2
+            ENDIF
+            elevatorList.score EQUAL elevatorList.score + score
+        ENDFOR
+
+        SET selectedElevator.score EQUAL ADD EACH elevator.score DIVISED by scoreFinal
+
+        IF selectedElevator.currentFloor < requestedFloor THEN
+            selectedElevator.status EQUAL moving
+            selectedElevator.direction EQUAL up
+            FOR selectedElevator.currentFloor < requestedFloor
+                selectedElevator.currentFloor EQUAL selectedElevator.currentFloor + 1
+            ENDFOR
+        ELSE
+            selectedElevator.status EQUAL moving
+            selectedElevator.direction EQUAL down
+            FOR selectedElevator.currentFloor > requestedFloor
+                selectedElevator.currentFloor EQUAL selectedElevator.currentFloor - 1
+            ENDFOR    
         ENDIF
-        -Trouver un ascenseur disponible (x)
-        -Faire bouger cet ascenseur jusqu’à l’utilisateur
-        -Gérer les portes
-        -Retourner l’ascenseur à la fin de la fonction, pour être utilisé par la méthode requestFloor de cet ascenseur.
+
+        selectedElevator.direction = idle
+        selectedElevator.status = on idle
+        selectedElevator.door = onpen
+
+        elevatorInAction EQUAL selectedElevator
     ENDSEQUENCE
 ENDDEFINE
 
-DEFINE Elevator USING _id, _status, _amountOfFloor AND _currentFloor
+DEFINE Elevator USING _id, _amountOfFloor, _currentFloor AND _idle
     SET ID TO _id
-    SET status TO _status
+    SET status TO idle
+    SET direction TO on idle 
     SET currentFloor TO _currentFloor
-    SET direction TO null 
+    SET idle TO _idle
     SET door TO NEW Door WITH _id
     SET FloorRequestButtonList TO EMPTY ARRAY
     SET floorRequestList TO EMPTY ARRAY
+    SET score TO 0
 
     SEQUENCE requestFloor USING _requestedFloor
-        -Déplacer l’ascenseur jusqu’à l’étage demandé par l’utilisateur
-        -Gérer les portes
+        FOR EACH floorRequest IN floorRequestList
+            SET idFloorRequest EQUAL idFloorRequest + 1
+        ENDFOR
+
+        PUSH NEW FloorRequestButton TO floorRequestList USING idFloorRequest AND requestedFloor
+
+        elevatorInAction.door EQUAL closed
+        elevatorInAction.status EQUAL moving 
+       
+        IF elevatorInAction.currentFloor < requestedFloor THEN
+            elevatorInAction.direction EQUAL up
+            FOR elevatorInAction.currentFloor < requestedFloor
+                elevatorInAction.currentFloor EQUAL elevatorInAction.currentFloor + 1
+            ENDFOR
+        ELSE
+            elevatorInAction.direction EQUAL down
+            FOR elevatorInAction.currentFloor > requestedFloor
+                elevatorInAction.currentFloor EQUAL elevatorInAction.currentFloor - 1
+            ENDFOR    
+        ENDIF
+
+        elevatorInAction.status EQUAL on idle
+        elevatorInAction.direction EQUAL idle
+        elevatorInAction.door EQUAL open
+
+        elevatorInAction.door EQUAL closed
+        elevatorInAction.status EQUAL moving
+
+        IF elevatorInAction.currentFloor < elevatorInAction.idle THEN
+            elevatorInAction.direction EQUAL up
+            FOR elevatorInAction.currentFloor < elevatorInAction.idle
+                elevatorInAction.currentFloor EQUAL elevatorInAction.currentFloor + 1
+            ENDFOR
+        ELSE
+            elevatorInAction.direction EQUAL down
+            FOR elevatorInAction.currentFloor ­­> elevatorInAction.idle
+                elevatorInAction.currentFloor EQUAL elevatorInAction.currentFloor - 1
+            ENDFOR
+        ENDIF
+
+        elevatorInAction.direction EQUAL idle
+        elevatorInAction.status EQUAL on idle
+        elevatorInAction.door EQUAL open
+        elevatorInAction.floorRequestList EQUAL EMPTY ARRAY   
     ENDSEQUENCE
 ENDDEFINE    
 
-DEFINE Door USING _id AND _status
+DEFINE Door USING _id
     SET ID TO _id
-    SET status TO _status
+    SET status TO closed
 ENDDEFINE
 
-DEFINE CallButton USING _id, _status, _floor AND _direction
+DEFINE CallButton USING _id, _floor AND _direction
     SET ID TO _id
-    SET status TO _status
+    SET status TO idle
     SET floor TO _floor
     SET direction TO _direction
 ENDDEFINE
 
-DEFINE FloorRequestButton USING _id, _status AND _floor
+DEFINE FloorRequestButton USING _id AND _floor
     SET ID TO _id
-    SET status TO _status
+    SET status TO idle
     SET floor TO _floor
 ENDDEFINE
 
@@ -66,21 +140,11 @@ ENDDEFINE
 
 ////////////////////// Scénario 1 ///////////////////////////
 
-SET columnA TO NEW Column WITH 1, "idle", 10, 2
-SET elevatorA TO NEW Elevator WITH 1, "idle" , 10 AND 2
-SET elevatorB TO NEW Elevator WITH 2, "idle" , 10 AND 6
-SET doorA TO NEW Door WITH 1, "closed"
-SET doorB TO NEW Door WITH 2, "closed"
+SET column1 TO NEW Column WITH 1, 10 AND 2
+column1.elevatorList[0].idle = 2
+column1.elevatorList[1].idle = 6
 
-
-
-
-
-
-
-
-
-
-////////////////////// Scénario 2 ///////////////////////////
+column1.requestElevator WITH 3 AND UP
+column1.elevatorList[0].requestFloor WITH 2
 
 
