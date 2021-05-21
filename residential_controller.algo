@@ -11,9 +11,10 @@ DEFINE Column USING _id, _amountOfFloors AND _amountOfElevators
     FOR EACH __amountOfElevators
        PUSH NEW Elevator TO elevatorsList USING _id, idle, _amountOfFloors
     ENDFOR
+
     FOR EACH _amountOfFloors
         PUSH NEW CallButton TO callButtonsList USING _id, idle, _id, up
-        PUSH NEW CallButton TO callButtonsList USING _id + 10, idle, _id, down
+        PUSH NEW CallButton TO callButtonsList USING _id + _amountOfFloors, idle, _id, down
     ENDFOR
 
     SEQUENCE requestElevator USING requestedFloor AND direction
@@ -31,7 +32,7 @@ DEFINE Column USING _id, _amountOfFloors AND _amountOfElevators
             elevatorList.score EQUAL elevatorList.score + score
         ENDFOR
 
-        SET selectedElevator.score EQUAL ADD EACH elevator.score DIVISED by scoreFinal
+        SET selectedElevator EQUAL smallest elevator.score
 
         IF selectedElevator.currentFloor < requestedFloor THEN
             selectedElevator.status EQUAL moving
