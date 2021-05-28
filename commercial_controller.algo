@@ -1,0 +1,133 @@
+DEFINE Battery USING _id AND _amountOfColumns AND _status AND _amountOfFloors AND _amountOfBasements AND _amountOfElevatorPerColumn
+    SET ID TO _id
+    SET status TO _status
+    SET columnsList TO EMPTY ARRAY
+    SET floorRequestButtonsList TO EMPTY ARRAY
+
+    FOR EACH _amountOfColumns
+        PUSH new Column IN columnsList USING _id AND _status AND _amountOfFloors AND _amountOfElevators AND _servedFloors AND _isBasement
+    ENDFOR
+
+    SEQUENCE assignElevator USING _requestedFloor AND _direction
+        SET chosenColumn TO CALL this findBestColumn RETURNING column          
+        "Choisire la bonne colonne selon letage demandé (x)"
+        SET chosenELevator TO CALL requestElevator  RETURNING elevator
+        "Choisir un ascenceur dans cette colonne (x)"
+        WHILE callButtonsList lenght NOTEQUAL 0
+            SET destination EQUAL this _requestedFloor
+            elevator status EQUAL "moving"
+            IF elevator currentFloor < destination
+                elevator direction EQUAL "up"
+                WHILE elevator currentFloor < destination
+                    elevator currentFloor EQUAL elevator currentFloor + 1
+                ENDWHILE
+            ELSE IF elevator currentFLoor > destination
+                elevator direction EQUAL "down"
+                WHILE elevator currentFloor > destination
+                    elevator currentFLoor EQUAL elevator currentFLoor - 1
+                ENDWHILE    
+            ENDIF
+            this floorRequestButtonsList SHIFT
+            elevator status EQUAL "stopped"
+        ENDWHILE
+        elevator status EQUAL "idle"
+        "Envoyer lascenceur a lutilisateur (x)"
+        elevator door status EQUAL "opened"
+        elevator door status EQUAL "closed"
+        "Ouvrire/Fermer les portes de lascenceur (x)"
+        WHILE floorRequestList lenght NOTEQUAL 0
+            SET destination EQUAL this _requestedFloor
+            elevator status EQUAL "moving"
+            IF elevator currentFloor < destination
+                elevator direction EQUAL "up"
+                WHILE elevator currentFloor < destination
+                elevator currentFloor EQUAL elevator currentFloor + 1
+                ENDWHILE
+            ELSE IF elevator currentFLoor > destination
+                elevator direction EQUAL "down"
+                WHILE elevator currentFloor > destination
+                    elevator currentFLoor EQUAL elevator currentFLoor - 1
+                ENDWHILE    
+            ENDIF
+            elevator status EQUAL "stopped"
+            this floorRequestButtonsList SHIFT
+        ENDWHILE
+        SET destination EQUAL floorRequestList
+        "Envoyer lascenceur a letage demandé"
+        "Ouvrire/Fermer les portes de lascenceur(x)"
+        elevator door status EQUAL "opened"
+        elevator door status EQUAL "closed"
+    ENDSEQUENCE
+
+    SEQUENCE findBestColumn USING _requestedFloor
+
+        FOR EACH column IN this columnsList
+            IF column servedFloorsList INCLUDE _requestedFloor
+                RETURN column
+            ENDIF
+        ENDFOR                
+    ENDSEQUENCE
+ENDDEFINE
+
+DEFINE Column USING _id AND _status AND _amountOfFloors AND _amountOfElevators AND _servedFloors AND _isBasement
+    SET ID TO _id
+    SET status TO _status
+    SET servedFloors  TO EMPTY ARRAY
+    SET isBasement TO _isBasement
+    SET elevatorsList  TO EMPTY ARRAY
+    SET callButtonsList  TO EMPTY ARRAY  
+
+    FOR EACH _amountOfElevators
+        PUSH new Elevator IN elevatorsList USING _id AND _status AND _currentFloor
+    ENDFOR
+
+    SEQUENCE requestElevator  USING _requestedFloor AND direction
+        FOR EACH elevator IN THIS elevatorsList
+            IF _requestedFloor currentFloor EQUALS 1
+                IF elevator currentFLoor EQUAL 1
+                    RETURN elevator
+                IF elevator direction IS down AND elevator currentFloor is greater THAN 1
+                    RETURN elevator
+                IF elevator direction IS up AND elevator currentFLoor is less THAN 1
+                    RETURN elevator
+                IF elevator status IS 'idle'
+                    RETURN elevator
+                IF elevator currentFLoor IS under (amountOfFloors DIVIDED BY (amountOfColumns - 1))
+                    RETURN elevator
+
+                "quelle est le meilleur ascenceur ?"
+            ENDIF   
+            RETURN elevator 
+        ENDFOR    
+        Sinon si la demande a été fait a partir dun etage
+    ENDSEQUENCE
+ENDDEFINE
+
+DEFINE Elevator USING _id AND _status AND _amountOfFloors AND _currentFloor
+SET ID TO _id
+SET status TO _status
+SET currentFloor TO _currentFloor
+SET direction TO 'idle'
+SET door TO new Door
+SET floorRequestList TO EMPTY ARRAY
+SET completedRequestsList TO EMPTY ARRAY
+ENDDEFINE
+
+DEFINE Door USING _id
+    SET ID TO _id
+    SET status TO 'closed'
+
+ENDDEFINE
+
+DEFINE CallButton USING _id AND _floor AND _direction
+    SET ID TO _id
+    SET status TO 'online'
+    SET floor TO _floor
+    SET direction TO _direction
+ENDDEFINE
+
+DEFINE FloorRequestButton USING _id AND _floor
+    SET ID TO _id
+    SET status TO 'idle'
+    SET floor TO _floor
+ENDDEFINE
